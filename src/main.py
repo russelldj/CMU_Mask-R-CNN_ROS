@@ -12,10 +12,12 @@ import rospy
 from CMU_Mask_R_CNN.msg import predictions
 from cv_converter import CV_Converter
 from geometry_msgs.msg import Pose2D
-from model import Mask_R_CNN
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
 from vision_msgs.msg import BoundingBox2D
+
+from mmseg.apis import inference_segmentor, init_segmentor
+from mmseg.core.evaluation import get_palette
 
 
 class CNN_Node:
@@ -26,8 +28,10 @@ class CNN_Node:
         with open(path) as infile_h:
             self.cfg = json.load(infile_h)
 
-        self.model = Mask_R_CNN(self.cfg)
-
+        config_path = self.cfg["config_path"]
+        checkpoint_path = self.cfg["checkpoint_path"]
+        device = self.cfg["device"]
+        self.model = init_segmentor(config_path, checkpoint_path, device=device)
         self.cv_converter = CV_Converter()
 
         # Initialize the subscribers last or else the callback will trigger
@@ -49,32 +53,40 @@ class CNN_Node:
         cv_img = cv.flip(cv_img, flipCode=-1)
         cv_img = cv.cvtColor(cv_img, cv.COLOR_BGR2RGB)
 
-        scores, bboxes, masks, output = self.model.forward(cv_img)
-        masks = masks.astype(np.uint8) * 255
+        # test a single image
+        result = inference_segmentor(self.model, cv_img)
 
-        # If you wish to publish the visualized results
-        visualized = self.model.visualize(cv_img, output)
-        self.pub_results.publish(
-            self.cv_converter.cv_to_msg(cv.flip(visualized, flipCode=-1))
+        # blend raw image and prediction
+        draw_img = self.model.show_result(
+            cv_img,
+            result,
+            palette=get_palette(self.cfg["palette"]),
+            show=False,
+            opacity=self.cfg["opacity"],
         )
 
-        # Convert outputs from forward call to predictions message
-        pub_msg = predictions()
-        pub_msg.header = Header(stamp=data.header.stamp)
+        # If you wish to publish the visualized results
+        self.pub_results.publish(
+            self.cv_converter.cv_to_msg(cv.flip(draw_img, flipCode=-1))
+        )
 
-        pub_msg.scores = scores
-        pub_msg.bboxes = [
-            BoundingBox2D(center=Pose2D(x=i[0], y=i[1]), size_x=i[2], size_y=i[3])
-            for i in bboxes
-        ]
-        pub_msg.masks = [
-            self.cv_converter.cv_to_msg(masks[i], mono=True)
-            for i in range(masks.shape[0])
-        ]
+        ## Convert outputs from forward call to predictions message
+        # pub_msg = predictions()
+        # pub_msg.header = Header(stamp=data.header.stamp)
 
-        pub_msg.source_image = self.cv_converter.cv_to_msg(cv.flip(cv_img, flipCode=-1))
+        # pub_msg.scores = scores
+        # pub_msg.bboxes = [
+        #    BoundingBox2D(center=Pose2D(x=i[0], y=i[1]), size_x=i[2], size_y=i[3])
+        #    for i in bboxes
+        # ]
+        # pub_msg.masks = [
+        #    self.cv_converter.cv_to_msg(masks[i], mono=True)
+        #    for i in range(masks.shape[0])
+        # ]
 
-        self.pub_predictions.publish(pub_msg)
+        # pub_msg.source_image = self.cv_converter.cv_to_msg(cv.flip(cv_img, flipCode=-1))
+
+        # self.pub_predictions.publish(pub_msg)
 
 
 if __name__ == "__main__":

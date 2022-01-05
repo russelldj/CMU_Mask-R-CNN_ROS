@@ -1,4 +1,4 @@
-#!/home/aaron/py36/bin/python
+#!/usr/bin/env python
 
 # -*- encoding: utf-8 -*-
 

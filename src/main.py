@@ -33,8 +33,10 @@ class CNN_Node:
         self.sub_rectified = rospy.Subscriber(
             self.cfg["input_topic"], Image, self.image_callback
         )
-        self.pub_predictions = rospy.Publisher("/cnn_predictions", Image, queue_size=1)
-        self.pub_vis = rospy.Publisher("/cnn_vis", Image, queue_size=1)
+        self.pub_predictions = rospy.Publisher(
+            "/seg_class_predictions", Image, queue_size=1
+        )
+        self.pub_vis = rospy.Publisher("/seg_vis", Image, queue_size=1)
 
     def image_callback(self, data):
         if not data.header.seq % self.cfg["use_image_every"] == 0:

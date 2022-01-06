@@ -2,7 +2,9 @@
     "config_path": "/home/frc-ag-1/dev/mmsegmentation/work_dirs/segformer_mit-b5_512x512_160k_rui_yamaha_portugal_UAV_12_21/segformer_mit-b5_512x512_160k_rui_yamaha_portugal_UAV_12_21.py",
     "checkpoint_path": "/home/frc-ag-1/dev/mmsegmentation/work_dirs/segformer_mit-b5_512x512_160k_rui_yamaha_portugal_UAV_12_21/latest.pth",
     "device": "cuda:0",
-    "use_image_every": 5,
+    "use_image_every": 1,
     "palette": "rui_yamaha",
-    "opacity": 0.5
+    "vis_label_opacity": 0.5,
+    "publish_vis": true,
+    "rotate_img": true
 }

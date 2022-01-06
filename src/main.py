@@ -31,7 +31,7 @@ class CNN_Node:
         # Initialize the subscribers last or else the callback will trigger
         # when the model hasn't been created
         self.sub_rectified = rospy.Subscriber(
-            "/mapping/left/image_color", Image, self.image_callback
+            self.cfg["input_topic"], Image, self.image_callback
         )
         self.pub_predictions = rospy.Publisher("/cnn_predictions", Image, queue_size=1)
         self.pub_vis = rospy.Publisher("/cnn_vis", Image, queue_size=1)
@@ -51,7 +51,6 @@ class CNN_Node:
 
         # Rotate back the prediction and input image for visualization
         # Note this image is (1, h, w) for some reason
-
         if self.cfg["rotate_img"]:
             result = np.flip(result, axis=(1, 2))
 

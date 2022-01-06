@@ -1,27 +1,25 @@
 <?xml version="1.0"?>
 <package format="2">
-  <name>CMU_Mask_R_CNN</name>
+  <name>mmsegmentation_predictions</name>
   <version>0.1.0</version>
   <description>Get live Mask-R-CNN predictions from drone images</description>
 
-  <maintainer email="azberger@andrew.cmu.edu">aaron</maintainer>
+  <maintainer email="davidrus@andrew.cmu.edu">aaron</maintainer>
 
   <license>BSD</license>
 
-  <url type="website">https://github.com/aaronzberger/CMU_Mask-R-CNN</url>
+  <url type="website">https://github.com/russelldj/CMU_Mask-R-CNN_ROS</url>
 
-  <author email="azberger@andrew.cmu.edu">Aaron Berger</author>
+  <author email="davidrus@andrew.cmu.edu">David Russell</author>
 
   <buildtool_depend>catkin</buildtool_depend>
   <build_depend>rospy</build_depend>
   <build_depend>message_generation</build_depend>
-  <build_depend>vision_msgs</build_depend>
   <build_depend>sensor_msgs</build_depend>
 
   <build_export_depend>rospy</build_export_depend>
   <exec_depend>rospy</exec_depend>
   <exec_depend>message_runtime</exec_depend>
-  <exec_depend>vision_msgs</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
 
   <!-- The export tag contains other, unspecified, tags -->

@@ -1,13 +1,11 @@
 cmake_minimum_required(VERSION 3.0.2)
-project(CMU_Mask_R_CNN)
+project(mmsegmentation_predictions)
 
 ## Find catkin macros and libraries
 ## if COMPONENTS list like find_package(catkin REQUIRED COMPONENTS xyz)
 ## is used, also find other catkin packages
 find_package(catkin REQUIRED COMPONENTS
   rospy
-  message_generation
-  vision_msgs
   sensor_msgs
 )
 
@@ -18,13 +16,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 
-## Generate added messages and services with any dependencies listed here
-generate_messages(
-  DEPENDENCIES
-  vision_msgs
-  sensor_msgs
-)
-
 ###################################
 ## catkin specific configuration ##
 ###################################
@@ -32,7 +23,7 @@ generate_messages(
 catkin_package(
 #  INCLUDE_DIRS include
 #  LIBRARIES CMU_Mask_R_CNN
-  CATKIN_DEPENDS message_runtime vision_msgs sensor_msgs
+  CATKIN_DEPENDS message_runtime sensor_msgs
 #  DEPENDS system_lib
 )
 

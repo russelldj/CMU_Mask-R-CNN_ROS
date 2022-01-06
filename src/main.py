@@ -6,11 +6,12 @@ import json
 import os
 import time
 
-import cv2 as cv
 import numpy as np
 import rospy
 from CMU_Mask_R_CNN.msg import predictions
-from cv_converter import CV_Converter
+
+# from cv_converter import CV_Converter
+import ros_numpy
 from geometry_msgs.msg import Pose2D
 from sensor_msgs.msg import Image
 from std_msgs.msg import Header
@@ -32,12 +33,11 @@ class CNN_Node:
         checkpoint_path = self.cfg["checkpoint_path"]
         device = self.cfg["device"]
         self.model = init_segmentor(config_path, checkpoint_path, device=device)
-        self.cv_converter = CV_Converter()
 
         # Initialize the subscribers last or else the callback will trigger
         # when the model hasn't been created
         self.sub_rectified = rospy.Subscriber(
-            "/mapping/left/image_raw", Image, self.image_callback
+            "/mapping/left/image_color", Image, self.image_callback
         )
         self.pub_predictions = rospy.Publisher(
             "/cnn_predictions", predictions, queue_size=1
@@ -47,14 +47,16 @@ class CNN_Node:
     def image_callback(self, data):
         if not data.header.seq % self.cfg["use_image_every"] == 0:
             return
-        cv_img = self.cv_converter.msg_to_cv(data)
-
-        # If a vertical flip is needed
-        cv_img = cv.flip(cv_img, flipCode=-1)
-        cv_img = cv.cvtColor(cv_img, cv.COLOR_BGR2RGB)
+        cv_img = ros_numpy.numpify(data)
+        # TODO figure out whether the model expects RGB or BGR
+        # This is assuming BGR
+        cv_img = np.flip(cv_img, axis=(0, 1))
 
         # test a single image
         result = inference_segmentor(self.model, cv_img)
+
+        cv_img = np.flip(cv_img, axis=(0, 1))
+        result = np.flip(result, axis=(1, 2))
 
         # blend raw image and prediction
         draw_img = self.model.show_result(
@@ -66,9 +68,7 @@ class CNN_Node:
         )
 
         # If you wish to publish the visualized results
-        self.pub_results.publish(
-            self.cv_converter.cv_to_msg(cv.flip(draw_img, flipCode=-1))
-        )
+        self.pub_results.publish(ros_numpy.msgify(Image, draw_img, encoding="bgr8"))
 
         ## Convert outputs from forward call to predictions message
         # pub_msg = predictions()

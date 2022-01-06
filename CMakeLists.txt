@@ -18,12 +18,6 @@ find_package(catkin REQUIRED COMPONENTS
 ## Declare ROS messages, services and actions ##
 ################################################
 
-## Generate messages in the 'msg' folder
-add_message_files(
-  FILES
-  predictions.msg
-)
-
 ## Generate added messages and services with any dependencies listed here
 generate_messages(
   DEPENDENCIES

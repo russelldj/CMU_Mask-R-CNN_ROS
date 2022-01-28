@@ -4,7 +4,7 @@ This is a `ros` node that publishes predictions from an `mmsegmentation` segment
 # Setup
 You need to create an environment that contains `rospkg` and the necessary dependencies for `mmsegmentation`. An example conda file is `mmseg_ros.env`. Alternatively, you can follow the directions from [mmsegmentation](https://github.com/open-mmlab/mmsegmentation/blob/master/docs/en/get_started.md#installation) directly. Finally, you need to clone my fork of [`mmsegmentation`](https://github.com/russelldj/mmsegmentation?organization=russelldj&organization=russelldj) and install it by `cd`ing to the repo location and running `pip install -e .` (note the trailing period).
 
-Make a directory called `catkin_ws` and run `catkin_make`. Go to the `src` dir and clone this repo. Also in the `src` dir clone [ros_numpy](git@github.com:eric-wieser/ros_numpy.git). Rerun `catkin_make`. Source `devel/setup.{sh|zsh}` to set up the environment. Run `rosrun mmsegmentation_predictions main.py` to start the node.
+Make a directory called `catkin_ws` and run `catkin_make`. Go to the `src` dir and clone this repo. Also in the `src` dir clone [ros_numpy](https://github.com/eric-wieser/ros_numpy). Rerun `catkin_make`. Source `devel/setup.{sh|zsh}` to set up the environment. Run `rosrun mmsegmentation_predictions main.py` to start the node.
 
 # Configuring
 You can edit most imporant aspects in the `cfg/config.json` file.

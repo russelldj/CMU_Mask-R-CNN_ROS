@@ -93,6 +93,7 @@ class SemanticCloud:
         Constructor
         \param gen_pcl (bool) whether generate point cloud, if set to true the node will subscribe to depth image
         """
+
         # Get point type
         point_type = rospy.get_param("/semantic_pcl/point_type")
         if point_type == 0:
@@ -114,41 +115,24 @@ class SemanticCloud:
         )
         # Set up CNN is use semantics
         if self.point_type is not PointType.COLOR:
+            # Taken from my version
+            # TODO convert this to use ros parameter server
+            config_path = os.path.join(
+                os.path.dirname(__file__), "..", "cfg", "config.json"
+            )
+
+            with open(config_path) as infile_h:
+                self.cfg = json.load(infile_h)
+
+            self.publish_vis = self.cfg["publish_vis"]
+
+            config_path = self.cfg["config_path"]
+            checkpoint_path = self.cfg["checkpoint_path"]
+            device = self.cfg["device"]
             print("Setting up CNN model...")
-            # Set device
-            self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
-            # Get dataset
-            dataset = rospy.get_param("/semantic_pcl/dataset")
-            # Setup model
-            model_name = "pspnet"
-            model_path = rospy.get_param("/semantic_pcl/model_path")
-            if dataset == "sunrgbd":  # If use version fine tuned on sunrgbd dataset
-                self.n_classes = 38  # Semantic class number
-                self.model = get_model(
-                    model_name, self.n_classes, version="sunrgbd_res50"
-                )
-                state = torch.load(model_path)
-                self.model.load_state_dict(state)
-                self.cnn_input_size = (321, 321)
-                self.mean = np.array(
-                    [104.00699, 116.66877, 122.67892]
-                )  # Mean value of dataset
-            elif dataset == "ade20k":
-                self.n_classes = 150  # Semantic class number
-                self.model = get_model(model_name, self.n_classes, version="ade20k")
-                state = torch.load(model_path)
-                self.model.load_state_dict(
-                    convert_state_dict(state["model_state"])
-                )  # Remove 'module' from dictionary keys
-                self.cnn_input_size = (473, 473)
-                self.mean = np.array(
-                    [104.00699, 116.66877, 122.67892]
-                )  # Mean value of dataset
-            self.model = self.model.to(self.device)
-            self.model.eval()
-            self.cmap = color_map(
-                N=self.n_classes, normalized=False
-            )  # Color map for semantic classes
+            self.model = init_segmentor(config_path, checkpoint_path, device=device)
+            # End my version
+
         # Declare array containers
         if self.point_type is PointType.SEMANTICS_BAYESIAN:
             self.semantic_colors = np.zeros(
@@ -210,20 +194,6 @@ class SemanticCloud:
                 buff_size=30 * 480 * 640,
             )
         print("Ready.")
-
-        # Taken from my version
-        path = os.path.join(os.path.dirname(__file__), "..", "cfg", "config.json")
-
-        with open(path) as infile_h:
-            self.cfg = json.load(infile_h)
-
-        self.publish_vis = self.cfg["publish_vis"]
-
-        config_path = self.cfg["config_path"]
-        checkpoint_path = self.cfg["checkpoint_path"]
-        device = self.cfg["device"]
-        # Initialize the model
-        self.model = init_segmentor(config_path, checkpoint_path, device=device)
 
         # Initialize the subscribers last or else the callback will trigger
         # when the model hasn't been created
@@ -427,21 +397,24 @@ class SemanticCloud:
             anti_aliasing=True,
             preserve_range=True,
         )  # Give float64
+
         img = img.astype(np.float32)
-        img -= self.mean
-        # Convert HWC -> CHW
-        img = img.transpose(2, 0, 1)
-        # Convert to tensor
-        img = torch.tensor(img, dtype=torch.float32)
-        img = img.unsqueeze(0)  # Add batch dimension required by CNN
-        with torch.no_grad():
-            img = img.to(self.device)
-            # Do inference
-            since = time.time()
-            outputs = self.model(img)  # N,C,W,H
-            # Apply softmax to obtain normalized probabilities
-            outputs = torch.nn.functional.softmax(outputs, 1)
-            return outputs
+        outputs = inference_segmentor(self.model, img, return_probabilites=True)[0]
+        # TODO determine if this pre-processing code is needed
+        # img -= self.mean
+        ## Convert HWC -> CHW
+        # img = img.transpose(2, 0, 1)
+        ## Convert to tensor
+        # img = torch.tensor(img, dtype=torch.float32)
+        # img = img.unsqueeze(0)  # Add batch dimension required by CNN
+        # with torch.no_grad():
+        #    img = img.to(self.device)
+        #    # Do inference
+        #    since = time.time()
+        #    outputs = self.model(img)  # N,C,W,H
+        #    # Apply softmax to obtain normalized probabilities
+        #    outputs = torch.nn.functional.softmax(outputs, 1)
+        #    return outputs
 
 
 def main(args):
